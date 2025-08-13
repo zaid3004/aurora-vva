@@ -1,4 +1,4 @@
 # aurora-vva
 
-to install pyaudio:
-bash: ```pip install -r requirements.txt``` ```pipwin install pyaudio```
+to install libraries:
+bash: ```pip install -r requirements.txt```
