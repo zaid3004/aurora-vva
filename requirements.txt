@@ -1,3 +1,2 @@
 SpeechRecognition
 pipwin
-pyaudio
