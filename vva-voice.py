@@ -1,3 +1,4 @@
+from urllib import request
 from winreg import QueryInfoKey
 import speech_recognition as sr
 import pyttsx3 as pt
@@ -8,6 +9,7 @@ import re
 import threading
 import time
 from typing import Optional, Dict, List
+import requests
 
 class VoiceAssistant:
     def __init__(self, name: str = "Aurora"):
@@ -119,6 +121,10 @@ class VoiceAssistant:
             ],
             'help': [
                 r'\b(help|what\s+can\s+you\s+do|commands|assistance)\b'
+            ],
+            'weather': [
+                r'\b(weather|current weather|forecast)\b',
+                r'\b(temperature in|weather in)\b'
             ]
         }
     
@@ -257,7 +263,7 @@ class VoiceAssistant:
                 self.tell_time()
             elif command == 'date':
                 self.tell_date()
-            elif command == 'greeting':  # FIXED: Added greeting handling
+            elif command == 'greeting':
                 self.handle_greeting()
             elif command == 'exit':
                 self.handle_exit()
@@ -265,7 +271,8 @@ class VoiceAssistant:
                 self.show_help()
             elif command == 'unknown':
                 self.handle_unknown_command(original_query)
-            # FIXED: Better error handling for special cases
+            elif command == 'weather':
+                self.handle_weather(original_query)
             elif command in ['timeout', 'unclear', 'service_error', 'error']:
                 self.handle_recognition_error(command)
             else:
@@ -343,6 +350,66 @@ class VoiceAssistant:
         except Exception as e:
             self.logger.error(f"Error telling date: {e}")
             self.speak("I'm sorry, I couldn't get today's date right now.")
+
+    def get_weather(self, city: str, country: str = None):
+        try:
+            api_key = "ef874fd2d8e55f0da278812e1c7187d4"
+            base_url = "https://api.openweathermap.org/data/2.5/weather"
+
+            if country:
+                location = (f"{city}, {country}")
+            else:
+                location = city
+
+            params = {
+                "q" : location,
+                "appid" : api_key,
+                "units" : "metric"
+            }
+
+            response = requests.get(base_url, params=params)
+            data = response.json()
+
+            #check if city is found
+            if data.get("cod") != 200:
+                self.speak(f"I couldn't find any information on {city}. Please check the city name and try again.")
+                return
+            
+            #extracting weather info
+            weather_desc = data["weather"][0]["description"]
+            temp = data["main"]["temp"]
+            humidity = data["main"]["humidity"]
+            wind_speed = data["wind"]["speed"]
+
+            #create a weather report
+            weather_report = (f"The weather in {city} is {weather_desc} with a temperature of {temp}, humidity is at {humidity}%. The calculated wind speed is {wind_speed} metres per second.")
+            #make aurora speak the weather report
+            self.speak(weather_report)
+
+        except Exception as e:
+            self.logger.error(f"Error occurred while fetching the weather report: {e}")
+            self.speak("Sorry, I was unable to retrieve the weather information right now.")
+
+    def handle_weather(self, query: str):
+        try:
+            #trying to match 'weather for {city}' or 'weather in {city}' or 'temperature in {city}'
+            match = re.search(r'(?:weather|temperature)(?: in| for)? ([a-zA-Z\s]+)', query, re.IGNORECASE)
+
+            if match:
+                city = match.group(1).strip()
+                self.get_weather(city)
+            else:
+                #if no city detected, ask the user for it
+                self.speak("Which city's weather would you like to know?")
+                city_response = self.listen()
+                if city_response and city_response not in ["timeout", "unclear", "service_error", "error"]:
+                    self.get_weather(city_response)
+                else:
+                    self.speak("I couldn't get the city name. Please try again.")
+        
+        except Exception as e:
+            self.logger.error(f"Error in handle_weather: {e}")
+            self.speak("Sorry, I couldn't process the weather request.")
 
     def handle_greeting(self):
         """FIXED: Properly handle greeting commands"""
@@ -490,5 +557,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
