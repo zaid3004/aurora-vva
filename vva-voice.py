@@ -43,11 +43,10 @@ class VoiceAssistant:
         self.logger = logging.getLogger(self.name)
     
     def _configure_speech_recognition(self):
-
-        #speech recognition settings - adjustable
-        self.recognizer.energy_threshold = 300
+        # FIXED: Better speech recognition settings
+        self.recognizer.energy_threshold = 300  # Lower threshold for better sensitivity
         self.recognizer.dynamic_energy_threshold = True
-        self.recognizer.pause_threshold = 1
+        self.recognizer.pause_threshold = 0.8  # Shorter pause detection
         self.recognizer.phrase_threshold = 0.3
 
         self.logger.info("Speech recognition configured with optimized settings")
@@ -56,25 +55,50 @@ class VoiceAssistant:
         try:
             engine = pt.init()
 
+            # Test if engine was created successfully
+            if engine is None:
+                self.logger.error("TTS engine returned None - trying alternative initialization")
+                engine = pt.init('sapi5')  # Try Windows SAPI5 specifically
+            
+            if engine is None:
+                self.logger.error("All TTS initialization attempts failed")
+                return None
+
             #available voices
             voices = engine.getProperty('voices')
+            self.logger.info(f"Found {len(voices) if voices else 0} available voices")
+            
             if voices:
+                # Log available voices for debugging
+                for i, voice in enumerate(voices):
+                    self.logger.info(f"Voice {i}: {voice.name} - {voice.id}")
+                
                 if len(voices) > 1:
                     engine.setProperty('voice', voices[1].id)
                 else:
                     engine.setProperty('voice', voices[0].id)
+            else:
+                self.logger.warning("No voices found - TTS may not work properly")
             
             #configurable speech rate (WPM)
-            engine.setProperty('rate', 100)
+            engine.setProperty('rate', 150)  # Slightly faster for better responsiveness
 
             #configurable volume (0.0 to 1.0)
             engine.setProperty('volume', 0.9)
 
-            self.logger.info("TTS engine initialized with custom settings")
+            # Test the engine by attempting to speak
+            try:
+                engine.say("TTS test")
+                engine.runAndWait()
+                self.logger.info("TTS engine initialized and tested successfully")
+            except Exception as test_error:
+                self.logger.warning(f"TTS test failed but engine initialized: {test_error}")
+            
             return engine
         
         except Exception as e:
             self.logger.error(f"Failed to initialize TTS engine: {e}")
+            print(f"TTS Error Details: {e}")
             return None
         
     def _setup_command_patterns(self) -> Dict[str, List[str]]:
@@ -106,24 +130,51 @@ class VoiceAssistant:
         if log_message:
             self.logger.info(f"Speaking: {text}")
     
+        # Always print to console for debugging
+        print(f"🔊 [AURORA SAYS]: {text}")
+    
         try:
             if self.engine:
                 # Stop any previous speech
                 self.engine.stop()
+                
+                # Clear any pending speech
+                try:
+                    self.engine.endLoop()
+                except:
+                    pass
             
                 # Say the text
                 self.engine.say(text)
-                self.engine.runAndWait()
+                
+                # Try to run and wait with timeout
+                try:
+                    self.engine.runAndWait()
+                except Exception as run_error:
+                    self.logger.error(f"runAndWait failed: {run_error}")
+                    # Try alternative method
+                    self.engine.startLoop()
+                    time.sleep(0.1)
+                    self.engine.iterate()
+                    self.engine.endLoop()
             
                 # Small delay
                 time.sleep(0.2)
             else:
                 # Fallback to text if TTS failure occurred
-                print(f"[ASSISTANT SAYS]: {text}")
+                self.logger.warning("TTS engine is None - using text fallback")
+                print(f"[TTS FAILED - TEXT ONLY]: {text}")
 
         except Exception as e:
             self.logger.error(f"TTS Error: {e}")
-            print(f"[ASSISTANT SAYS]: {text}")
+            print(f"[TTS ERROR - TEXT FALLBACK]: {text}")
+            
+            # Try to reinitialize TTS engine
+            try:
+                self.logger.info("Attempting to reinitialize TTS engine...")
+                self.engine = self._initialize_tts_engine()
+            except:
+                pass
 
     def listen(self) -> Optional[str]:
         if not self.is_listening:
@@ -132,11 +183,13 @@ class VoiceAssistant:
         try:
             with sr.Microphone() as source:
                 #taking audio input from user's mic
-                print("\N{Microphone}Listening...")
-                self.logger.debug("Starting to listen for audio input \N{Microphone}")
+                print("🎤Listening...")
+                self.logger.debug("Starting to listen for audio input 🎤")
 
                 #adjusting for ambient noise to increase user voice accuracy
                 self.recognizer.adjust_for_ambient_noise(source, duration=1)
+                
+                # FIXED: Better threshold management
                 if self.recognizer.energy_threshold > 800:
                     self.recognizer.energy_threshold = 800
                     print("⚡ Energy threshold was too high, capped at 800")
@@ -148,9 +201,9 @@ class VoiceAssistant:
                     phrase_time_limit=15
                 )
 
-                print("\U0001F504 Processing Speech...")
+                print("🔄 Processing Speech...")
 
-                #connec to google's speech recognition software
+                #connect to google's speech recognition software
                 command = self.recognizer.recognize_google(audio, language='en-US')
 
                 command= command.strip().lower()
@@ -166,25 +219,22 @@ class VoiceAssistant:
                 })
 
                 return command
+                
         except sr.WaitTimeoutError:
-            self.speak("I didn't hear anything. Please try speaking again.", False)
             self.logger.warning("Speech recognition timeout - no speech detected.")
-            return ""
-        
+            return "timeout"
+            
         except sr.UnknownValueError:
-            self.speak("I'm sorry, I couldn't understand what you just said. Could you please repeat that for me?", False)
             self.logger.warning("Speech recognition failed - could not understand audio")
-            return ""
-        
+            return "unclear"
+            
         except sr.RequestError as e:
-            self.speak("I'm having trouble connecting to the speech recognition service. Please check your internet connection.", False)
-            self.logger.error(f"SPeech recognition service error: {e}")
-            return ""
-        
+            self.logger.error(f"Speech recognition service error: {e}")
+            return "service_error"
+            
         except Exception as e:
-            self.speak("I encountered an unexpected error while listening. Let me try again.", False)
             self.logger.error(f"Unexpected error in listen(): {e}")
-            return ""
+            return "error"
         
     def recognize_command(self, query: str) -> Optional[str]:
         if not query:
@@ -208,18 +258,34 @@ class VoiceAssistant:
                 self.tell_time()
             elif command == 'date':
                 self.tell_date()
+            elif command == 'greeting':  # FIXED: Added greeting handling
+                self.handle_greeting()
             elif command == 'exit':
                 self.handle_exit()
             elif command == 'help':
                 self.show_help()
             elif command == 'unknown':
                 self.handle_unknown_command(original_query)
+            # FIXED: Better error handling for special cases
+            elif command in ['timeout', 'unclear', 'service_error', 'error']:
+                self.handle_recognition_error(command)
             else:
                 self.logger.warning(f"Unhandled command: {command}")
 
         except Exception as e:
-            self.logger.error(f"Eroor executing command '{command}'")
+            self.logger.error(f"Error executing command '{command}': {e}")
             self.speak("I encountered an error while processing your request. Please try again.")
+
+    def handle_recognition_error(self, error_type: str):
+        """Handle different types of speech recognition errors"""
+        if error_type == 'timeout':
+            self.speak("I didn't hear anything. Please try speaking again.", False)
+        elif error_type == 'unclear':
+            self.speak("I'm sorry, I couldn't understand what you said. Could you please repeat that?", False)
+        elif error_type == 'service_error':
+            self.speak("I'm having trouble with the speech service. Please check your internet connection.", False)
+        elif error_type == 'error':
+            self.speak("I encountered an unexpected error while listening. Let me try again.", False)
 
     def tell_time(self):
         try:
@@ -280,6 +346,7 @@ class VoiceAssistant:
             self.speak("I'm sorry, I couldn't get today's date right now.")
 
     def handle_greeting(self):
+        """FIXED: Properly handle greeting commands"""
         hour = dt.datetime.now().hour
         
         if hour < 12:
@@ -299,6 +366,14 @@ class VoiceAssistant:
         import random
         response = random.choice(responses)
         self.speak(response)
+        
+        # Log the greeting interaction
+        self.conversation_history.append({
+            'timestamp': dt.datetime.now().isoformat(),
+            'command': 'greeting',
+            'response': response,
+            'type': 'assistant_response'
+        })
 
     def show_help(self):
         help_text = f"""Here's what I can help you with:
@@ -330,18 +405,25 @@ class VoiceAssistant:
         self.logger.info(f"Unknown command received: '{query}'")
 
     def handle_exit(self):
+        """FIXED: Proper exit handling"""
         responses = [
-            "I'm not sure how to help with that. Could you try asking about the time, date, or say 'help' for more options?",
-            "I didn't recognize that command. I can tell you the time, date, or you can ask for help to see what I can do.",
-            "I'm still learning! Right now I can help with time, date, and basic conversation. Try saying 'help' for more details."
+            f"Goodbye! It was nice talking to you.",
+            f"Have a great day! See you next time.",
+            f"Bye for now! Take care!"
         ]
         
         import random
         response = random.choice(responses)
         self.speak(response)
         
-        #log unknown commands for future expansion and development
-        self.logger.info(f"Unknown command received: '{query}'")
+        # Stop the assistant
+        self.is_listening = False
+        
+        # Save conversation history before exit
+        self.save_conversation_history()
+        
+        #log exit command
+        self.logger.info("Exit command executed - shutting down")
 
     def save_conversation_history(self):
         try:
@@ -369,8 +451,10 @@ class VoiceAssistant:
                 #listen for user input
                 query = self.listen()
                 
-                #skip empty queries
-                if not query:
+                #skip empty queries and error states that don't need processing
+                if not query or query in ['timeout', 'unclear', 'service_error', 'error']:
+                    if query in ['timeout', 'unclear', 'service_error', 'error']:
+                        self.handle_recognition_error(query)
                     continue
                 
                 #recognize command from the query
