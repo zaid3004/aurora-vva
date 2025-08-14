@@ -10,6 +10,15 @@ import threading
 import time
 from typing import Optional, Dict, List
 import requests
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
+
+#access API keys
+API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
 
 class VoiceAssistant:
     def __init__(self, name: str = "Aurora"):
@@ -353,7 +362,10 @@ class VoiceAssistant:
 
     def get_weather(self, city: str, country: str = None):
         try:
-            api_key = "<INSERT API KEY HERE>"
+            api_key = os.getenv("OPENWEATHER_API_KEY")
+            if not api_key:
+                self.speak("API key for weather service is missing.")
+                return
             base_url = "https://api.openweathermap.org/data/2.5/weather"
 
             if country:
@@ -557,4 +569,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
