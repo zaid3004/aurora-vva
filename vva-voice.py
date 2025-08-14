@@ -353,7 +353,7 @@ class VoiceAssistant:
 
     def get_weather(self, city: str, country: str = None):
         try:
-            api_key = "ef874fd2d8e55f0da278812e1c7187d4"
+            api_key = "<INSERT API KEY HERE>"
             base_url = "https://api.openweathermap.org/data/2.5/weather"
 
             if country:
@@ -557,3 +557,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
