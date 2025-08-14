@@ -88,7 +88,6 @@ class VoiceAssistant:
 
             # Test the engine by attempting to speak
             try:
-                engine.say("TTS test")
                 engine.runAndWait()
                 self.logger.info("TTS engine initialized and tested successfully")
             except Exception as test_error:
@@ -491,3 +490,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
