@@ -438,7 +438,7 @@ class VoiceAssistant:
         print("=" * 50)
         
         #welcome message
-        welcome_msg = f"Hello! I'm {self.name}, your enhanced voice assistant. I'm ready to help you with time, date, and general conversation. Say 'help' if you need guidance, or 'stop' to exit."
+        welcome_msg = f"Hello! I'm {self.name}, your enhanced voice assistant. Say 'help' if you need guidance, or 'stop' to exit."
         self.speak(welcome_msg)
         
         print("\n💡 Tip: Speak clearly and naturally. I understand many different ways of asking for things!")
@@ -490,4 +490,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
