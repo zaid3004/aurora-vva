@@ -2,4 +2,4 @@ SpeechRecognition
 pyttsx3==2.90
 pipwin
 pyaudio
-
+requests
