@@ -12,13 +12,12 @@ from typing import Optional, Dict, List
 import requests
 from dotenv import load_dotenv
 import os
-
+import spacy
 
 load_dotenv()
 
 #access API keys
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
-
 
 class VoiceAssistant:
     def __init__(self, name: str = "Aurora"):
@@ -38,9 +37,43 @@ class VoiceAssistant:
         #initialize text to speech engine
         self.engine = self._initialize_tts_engine()
 
-        #command patterns
+        #command patterns (kept for backward compatibility)
         self.command_patterns = self._setup_command_patterns()
+        
+        #initialize spaCy NLU
+        self._initialize_spacy()
+        
+        # Common words that are not cities
+        self.non_city_words = {
+            'like', 'today', 'tomorrow', 'now', 'currently', 'outside', 'there',
+            'going', 'to', 'be', 'will', 'is', 'it', 'the', 'weather', 'temperature',
+            'forecast', 'report', 'update', 'please', 'tell', 'me', 'what', 'how',
+            'when', 'where', 'nice', 'good', 'bad', 'hot', 'cold', 'warm', 'cool'
+        }
+        
         self.logger.info(f"{self.name} voice assistant initialized successfully")
+
+    def _initialize_spacy(self):
+        """Initialize spaCy NLU for better language understanding"""
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+            self.logger.info("spaCy NLU initialized successfully")
+            
+            # Define intent keywords with confidence scoring
+            self.intent_keywords = {
+                'time': ['time', 'clock', 'hour', 'minute', 'current time', 'what time'],
+                'date': ['date', 'day', 'today', 'calendar', 'what day', 'current date'],
+                'weather': ['weather', 'temperature', 'rain', 'sunny', 'cloudy', 'forecast', 
+                           'climate', 'hot', 'cold', 'umbrella', 'storm', 'snow'],
+                'greeting': ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 
+                            'good evening', 'greetings', 'howdy'],
+                'help': ['help', 'assist', 'what can you do', 'commands', 'support'],
+                'exit': ['stop', 'exit', 'quit', 'goodbye', 'bye', 'shutdown', 'turn off']
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize spaCy: {e}")
+            self.nlp = None
 
     def _setup_logging(self):
         logging.basicConfig(
@@ -136,6 +169,105 @@ class VoiceAssistant:
                 r'\b(temperature in|weather in)\b'
             ]
         }
+
+    def enhanced_command_recognition(self, query: str) -> tuple[Optional[str], Dict]:
+        """Enhanced command recognition using spaCy NLU"""
+        if not query:
+            return None, {}
+            
+        # First try regex patterns (existing system)
+        regex_result = self.recognize_command(query)
+        if regex_result != 'unknown':
+            self.logger.info(f"Regex matched: {regex_result}")
+            return regex_result, {}
+        
+        # If regex fails, try spaCy NLU
+        if self.nlp:
+            return self._spacy_intent_recognition(query)
+        
+        return 'unknown', {}
+
+    def _spacy_intent_recognition(self, query: str) -> tuple[str, Dict]:
+        """Use spaCy for intelligent intent recognition and entity extraction"""
+        try:
+            doc = self.nlp(query.lower())
+            
+            # Extract entities
+            entities = {
+                'cities': [],
+                'dates': [],
+                'times': [],
+                'locations': []
+            }
+            
+            for ent in doc.ents:
+                if ent.label_ in ['GPE', 'LOC']:  # Geopolitical entities, locations
+                    entities['cities'].append(ent.text)
+                elif ent.label_ in ['DATE', 'TIME']:
+                    entities['dates'].append(ent.text)
+                elif ent.label_ == 'TIME':
+                    entities['times'].append(ent.text)
+            
+            # Intent classification using keyword matching with confidence
+            intent_scores = {}
+            
+            for intent, keywords in self.intent_keywords.items():
+                score = 0
+                for keyword in keywords:
+                    if keyword in query.lower():
+                        score += 1
+                    # Check for semantic similarity with spaCy
+                    for token in doc:
+                        if token.similarity(self.nlp(keyword)[0]) > 0.7:
+                            score += 0.5
+                
+                if score > 0:
+                    intent_scores[intent] = score
+            
+            # Get the highest scoring intent
+            if intent_scores:
+                best_intent = max(intent_scores, key=intent_scores.get)
+                confidence = intent_scores[best_intent]
+                
+                self.logger.info(f"spaCy matched intent: {best_intent} (confidence: {confidence})")
+                self.logger.info(f"Extracted entities: {entities}")
+                
+                return best_intent, entities
+            
+            # If no clear intent, try context clues
+            context_intent = self._analyze_context_clues(doc)
+            if context_intent:
+                return context_intent, entities
+                
+            return 'unknown', entities
+            
+        except Exception as e:
+            self.logger.error(f"spaCy intent recognition error: {e}")
+            return 'unknown', {}
+
+    def _analyze_context_clues(self, doc) -> Optional[str]:
+        """Analyze context clues for better intent recognition"""
+        text = doc.text.lower()
+        
+        # Weather context clues
+        weather_clues = ['outside', 'today', 'tomorrow', 'hot', 'cold', 'rain', 'sun']
+        if any(clue in text for clue in weather_clues) and any(word in text for word in ['what', 'how', 'is']):
+            return 'weather'
+        
+        # Time context clues
+        if any(word in text for word in ['what', 'tell', 'current']) and 'now' in text:
+            return 'time'
+        
+        # Question patterns
+        if text.startswith(('what', 'how', 'when', 'where', 'tell me')):
+            if any(word in text for word in ['weather', 'temperature']):
+                return 'weather'
+            elif any(word in text for word in ['time', 'clock']):
+                return 'time'
+            elif any(word in text for word in ['date', 'day']):
+                return 'date'
+        
+        return None
     
     def speak(self, text: str, log_message: bool = True):
         if not text:
@@ -251,6 +383,7 @@ class VoiceAssistant:
             return "error"
         
     def recognize_command(self, query: str) -> Optional[str]:
+        """Original regex-based command recognition (kept for compatibility)"""
         if not query:
             return None
         query = query.lower().strip()
@@ -266,7 +399,11 @@ class VoiceAssistant:
         self.logger.debug(f"No command pattern matched for: {query}")
         return 'unknown'
     
-    def execute_command(self, command: str, original_query: str):
+    def execute_command(self, command: str, original_query: str, entities: Dict = None):
+        """Enhanced command execution with entity support"""
+        if entities is None:
+            entities = {}
+            
         try:
             if command == 'time':
                 self.tell_time()
@@ -278,10 +415,10 @@ class VoiceAssistant:
                 self.handle_exit()
             elif command == 'help':
                 self.show_help()
+            elif command == 'weather':
+                self.handle_weather_enhanced(original_query, entities)
             elif command == 'unknown':
                 self.handle_unknown_command(original_query)
-            elif command == 'weather':
-                self.handle_weather(original_query)
             elif command in ['timeout', 'unclear', 'service_error', 'error']:
                 self.handle_recognition_error(command)
             else:
@@ -290,6 +427,110 @@ class VoiceAssistant:
         except Exception as e:
             self.logger.error(f"Error executing command '{command}': {e}")
             self.speak("I encountered an error while processing your request. Please try again.")
+
+    def _extract_city_from_query(self, query: str) -> Optional[str]:
+        """Extract city name from weather query with better filtering"""
+        # More specific regex patterns for city extraction
+        city_patterns = [
+            r'weather (?:in|for) ([a-zA-Z\s]{2,30})(?:\?|$)',  # "weather in Paris" or "weather for New York"
+            r'temperature (?:in|for) ([a-zA-Z\s]{2,30})(?:\?|$)',  # "temperature in London"
+            r'(?:how\'?s (?:the )?weather (?:in|at)) ([a-zA-Z\s]{2,30})(?:\?|$)',  # "how's weather in Tokyo"
+            r'(?:what\'?s (?:the )?weather (?:like )?(?:in|at)) ([a-zA-Z\s]{2,30})(?:\?|$)',  # "what's weather like in Berlin"
+        ]
+        
+        for pattern in city_patterns:
+            match = re.search(pattern, query.lower())
+            if match:
+                potential_city = match.group(1).strip()
+                
+                # Filter out common words that aren't cities
+                city_words = potential_city.split()
+                filtered_words = [word for word in city_words if word.lower() not in self.non_city_words]
+                
+                if filtered_words:
+                    city = ' '.join(filtered_words)
+                    # Basic validation - city should be reasonable length and not all common words
+                    if 2 <= len(city) <= 50 and not all(word.lower() in self.non_city_words for word in city.split()):
+                        return city
+        
+        return None
+
+    def _is_general_weather_query(self, query: str) -> bool:
+        """Check if this is a general weather query without specific location"""
+        general_patterns = [
+            r'^what\'?s (?:the )?weather (?:like|going to be)?(?:\?)?$',
+            r'^how\'?s (?:the )?weather(?:\?)?$',
+            r'^weather (?:report|forecast|update)(?:\?)?$',
+            r'^what\'?s (?:the )?weather (?:like )?(?:today|tomorrow|outside)(?:\?)?$',
+            r'^tell me (?:about )?(?:the )?weather(?:\?)?$',
+            r'^weather(?:\?)?$'
+        ]
+        
+        query_clean = query.lower().strip()
+        for pattern in general_patterns:
+            if re.match(pattern, query_clean):
+                return True
+        return False
+
+    def handle_weather_enhanced(self, query: str, entities: Dict):
+        """Enhanced weather handling with spaCy entity extraction"""
+        try:
+            city = None
+            
+            # First check if we extracted a city from spaCy
+            if entities and entities.get('cities'):
+                # Filter spaCy entities to remove common words
+                valid_cities = [city for city in entities['cities'] if city.lower() not in self.non_city_words]
+                if valid_cities:
+                    city = valid_cities[0]  # Use first valid detected city
+                    self.logger.info(f"spaCy extracted valid city: {city}")
+            
+            # If no valid city from spaCy, try improved regex extraction
+            if not city:
+                city = self._extract_city_from_query(query)
+                if city:
+                    self.logger.info(f"Regex extracted city: {city}")
+            
+            # Check if this is a general weather query
+            if not city and self._is_general_weather_query(query):
+                self.speak("Which city would you like to know the weather for?")
+                city_response = self.listen()
+                if city_response and city_response not in ["timeout", "unclear", "service_error", "error"]:
+                    # Clean the city response
+                    potential_city = self._extract_city_from_query(f"weather in {city_response}")
+                    if potential_city:
+                        self.get_weather(potential_city)
+                    else:
+                        # Use the response directly if no extraction worked
+                        clean_city = ' '.join([word for word in city_response.split() 
+                                             if word.lower() not in self.non_city_words])
+                        if clean_city:
+                            self.get_weather(clean_city)
+                        else:
+                            self.speak("I couldn't understand the city name. Please try again.")
+                else:
+                    self.speak("I didn't catch the city name. Please try asking again.")
+                return
+            
+            if city:
+                self.get_weather(city)
+            else:
+                # Fallback - ask for city
+                self.speak("I couldn't determine which city you're asking about. Which city's weather would you like to know?")
+                city_response = self.listen()
+                if city_response and city_response not in ["timeout", "unclear", "service_error", "error"]:
+                    clean_city = ' '.join([word for word in city_response.split() 
+                                         if word.lower() not in self.non_city_words])
+                    if clean_city:
+                        self.get_weather(clean_city)
+                    else:
+                        self.speak("I couldn't understand the city name. Please try again.")
+                else:
+                    self.speak("I didn't catch the city name. Please try asking again.")
+        
+        except Exception as e:
+            self.logger.error(f"Error in handle_weather_enhanced: {e}")
+            self.speak("Sorry, I couldn't process the weather request.")
 
     def handle_recognition_error(self, error_type: str):
         """Handle different types of speech recognition errors"""
@@ -403,25 +644,8 @@ class VoiceAssistant:
             self.speak("Sorry, I was unable to retrieve the weather information right now.")
 
     def handle_weather(self, query: str):
-        try:
-            #trying to match 'weather for {city}' or 'weather in {city}' or 'temperature in {city}'
-            match = re.search(r'(?:weather|temperature)(?: in| for)? ([a-zA-Z\s]+)', query, re.IGNORECASE)
-
-            if match:
-                city = match.group(1).strip()
-                self.get_weather(city)
-            else:
-                #if no city detected, ask the user for it
-                self.speak("Which city's weather would you like to know?")
-                city_response = self.listen()
-                if city_response and city_response not in ["timeout", "unclear", "service_error", "error"]:
-                    self.get_weather(city_response)
-                else:
-                    self.speak("I couldn't get the city name. Please try again.")
-        
-        except Exception as e:
-            self.logger.error(f"Error in handle_weather: {e}")
-            self.speak("Sorry, I couldn't process the weather request.")
+        """Original weather handler (kept for compatibility)"""
+        self.handle_weather_enhanced(query, {})
 
     def handle_greeting(self):
         """FIXED: Properly handle greeting commands"""
@@ -457,22 +681,23 @@ class VoiceAssistant:
         help_text = f"""Here's what I can help you with:
 
         ⏰ Time: Ask "What time is it?" or "Tell me the time"
-        📅 Date: Ask "What's today's date?" or "Tell me the date"
+        📅 Date: Ask "What's today's date?" or "Tell me the date"  
+        🌤️  Weather: Ask "What's the weather like?" or "How's it in [city]?"
         👋 Greetings: Say hello and I'll greet you back
         ❓ Help: Ask for help to hear this message again
         🔚 Exit: Say "stop", "exit", or "goodbye" to end our conversation
 
-        Just speak naturally - I understand different ways of asking for things!
+        I now understand natural language better! Try speaking naturally.
         """
         
-        self.speak("Here are the things I can help you with: I can tell you the time, today's date, respond to greetings, provide help, and exit when you're done. Just speak naturally!")
+        self.speak("Here are the things I can help you with: I can tell you the time, today's date, weather information, respond to greetings, provide help, and exit when you're done. I now understand natural language much better, so just speak naturally!")
         print(help_text)
 
     def handle_unknown_command(self, query: str):
         responses = [
-            "I'm not sure how to help with that. Could you try asking about the time, date, or say 'help' for more options?",
-            "I didn't recognize that command. I can tell you the time, date, or you can ask for help to see what I can do.",
-            "I'm still learning! Right now I can help with time, date, and basic conversation. Try saying 'help' for more details."
+            "I'm not sure how to help with that. Could you try asking about the time, date, weather, or say 'help' for more options?",
+            "I didn't recognize that command. I can tell you the time, date, weather, or you can ask for help to see what I can do.",
+            "I'm still learning! Right now I can help with time, date, weather, and basic conversation. Try saying 'help' for more details."
         ]
         
         import random
@@ -513,15 +738,16 @@ class VoiceAssistant:
             self.logger.error(f"Failed to save conversation history: {e}")
         
     def run(self):
-        print(f"\n🤖 {self.name} Voice Assistant 2.0 Starting Up...")
-        print("=" * 50)
+        print(f"\n🤖 {self.name} Voice Assistant 2.0 - Enhanced with spaCy NLU")
+        print("=" * 60)
         
         #welcome message
-        welcome_msg = f"Hello! I'm {self.name}, your enhanced voice assistant. Say 'help' if you need guidance, or 'stop' to exit."
+        welcome_msg = (f"Hello! I'm {self.name}")
         self.speak(welcome_msg)
         
-        print("\n💡 Tip: Speak clearly and naturally. I understand many different ways of asking for things!")
-        print("🎯 Try: 'What time is it?', 'Tell me today's date', 'Hello Aurora', or 'Help me'\n")
+        print("\n💡 Tip: I now understand natural language much better! Try:")
+        print("🎯 'What's the weather like outside?', 'How's it looking in London?', 'Is it going to rain?'")
+        print("🎯 'What time is it?', 'Tell me today's date', 'Hello Aurora'\n")
         
         #main interaction loop
         while self.is_listening:
@@ -535,11 +761,11 @@ class VoiceAssistant:
                         self.handle_recognition_error(query)
                     continue
                 
-                #recognize command from the query
-                command = self.recognize_command(query)
+                #Enhanced command recognition with spaCy
+                command, entities = self.enhanced_command_recognition(query)
                 
                 #execute the appropriate command
-                self.execute_command(command, query)
+                self.execute_command(command, query, entities)
                 
                 #small delay to prevent overwhelming the user
                 time.sleep(0.5)
