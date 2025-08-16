@@ -4,3 +4,5 @@ pipwin
 pyaudio
 requests
 spacy
+psutil
+plyer
