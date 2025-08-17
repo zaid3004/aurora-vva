@@ -1,8 +1,9 @@
-SpeechRecognition
-pyttsx3==2.90
-pipwin
-pyaudio
+eel
+speechrecognition
+pyttsx3
 requests
+python-dotenv
 spacy
 psutil
 plyer
+win10toast
