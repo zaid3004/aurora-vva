@@ -1,0 +1,179 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background: #f5f5fa;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 700px;
+  padding: 24px;
+  margin: 0 auto;
+}
+
+.wifi-card {
+  border: 2px dashed #dddddd;
+  border-radius: 10px;
+  background: white;
+  padding: 24px;
+  width: 100%;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 400;
+  margin-bottom: 18px;
+  color: #222;
+}
+
+.wifi-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.qr-aligned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 156px;
+}
+
+.qr-container {
+  border: 2px solid #000;
+  background: #fff;
+  border-radius: 0;
+  padding: 8px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 142px;
+  height: 142px;
+}
+
+#qrcode {
+  width: 126px;
+  height: 126px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.instruction {
+  font-size: 12px;
+  color: #444;
+  max-width: 144px;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.field-group {
+  margin-bottom: 0;
+}
+
+.field-label {
+  font-size: 12px;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.field-value {
+  font-size: 16px;
+  background: #f0f2f5;
+  padding: 10px 14px;
+  border-radius: 5px;
+  border: 1.5px solid #e0e0e0;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.btn {
+  background: #4b61d1;
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #3949ab;
+}
+
+@media (max-width: 600px) {
+  .wifi-row {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .button-group {
+    justify-content: center;
+  }
+}
+
+/* Hide controls on print/PDF/image export */
+@media print {
+  .button-group {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .container {
+    padding: 0;
+  }
+}
+.field-input {
+  font-size: 16px;
+  background: #f0f2f5;
+  padding: 10px 14px;
+  border-radius: 5px;
+  border: 1.5px solid #e0e0e0;
+  min-width: 0;
+  width: 100%;
+  display: block;
+}
+
+.field-value-print {
+  display: none;
+}
+
+/* Hide inputs on print/export, show their values as plain text */
+@media print {
+  .field-input {
+    display: none !important;
+  }
+  .field-value-print {
+    display: block !important;
+  }
+}
+

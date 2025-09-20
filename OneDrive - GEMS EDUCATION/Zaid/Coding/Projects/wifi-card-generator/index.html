@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WiFi QR Code Card</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="wifi-card" id="wifiCard">
+        <div class="title">WiFi Login</div>
+        <div class="wifi-row">
+          <div class="qr-aligned">
+            <div class="qr-container">
+              <div id="qrcode"></div>
+            </div>
+            <div class="instruction">
+              📱 Point your phone's camera at the QR code to connect to WiFi
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field-group">
+              <div class="field-label">Network name</div>
+              <input class="field-input" id="networkInput" type="text" placeholder="Enter Wi-Fi Network Name">
+              <div class="field-value-print" id="networkPrint"></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Password</div>
+              <input class="field-input" id="passwordInput" type="password" placeholder="Enter Wi-Fi Password">
+              <div class="field-value-print" id="passwordPrint"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="savePngBtn">Save as PNG</button>
+        <button class="btn" id="savePdfBtn">Save as PDF</button>
+        <button class="btn" id="printBtn">Print</button>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
