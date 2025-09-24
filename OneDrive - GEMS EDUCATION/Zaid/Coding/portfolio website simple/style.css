@@ -1,0 +1,711 @@
+/* Cool Coastal Vibes Color Scheme */
+:root {
+    --dark-navy: #2C3E50;
+    --medium-gray: #95A5A6;
+    --light-gray: #ECEFF1;
+    --coral-red: #E74C3C;
+    --bright-red: #C0392B;
+    --text-white: #FFFFFF;
+    --text-dark: #1A1A1A;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--dark-navy);
+    color: var(--text-white);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Header Styles */ 
+.header {
+    position: relative;
+    padding: 20px 50px;
+    background: linear-gradient(180deg, rgba(44, 62, 80, 0.9) 0%, transparent 100%);
+}
+
+.logo {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--coral-red);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Main Container */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+}
+
+/* Portfolio pages specific layout */
+.portfolio-page .main-container {
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px 0;
+    min-height: auto;
+}
+
+.portfolio-page .welcome-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 40px auto 60px auto;
+    padding: 0 50px;
+    text-align: center;
+}
+
+.welcome-section {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.welcome-title {
+    font-size: 3rem;
+    font-weight: 300;
+    margin-bottom: 20px;
+    color: var(--light-gray);
+    text-align: center;
+}
+
+.welcome-subtitle {
+    font-size: 1.2rem;
+    color: var(--medium-gray);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.welcome-section hr {
+    border: none;
+    height: 1px;
+    background-color: var(--medium-gray);
+    margin: 30px 0 20px 0;
+    width: 100%;
+    opacity: 0.5;
+}
+
+.contact-info {
+    font-size: 1rem;
+    color: var(--text-white);
+    text-align: center;
+    margin-top: 15px;
+}
+
+.contact-link {
+    color: var(--coral-red);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+    color: var(--bright-red);
+    text-decoration: underline;
+}
+
+/* Account Selection */
+.account-selection {
+    width: 100%;
+    max-width: 1000px;
+}
+
+.account-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.account-card {
+    background: linear-gradient(145deg, rgba(149, 165, 166, 0.1), rgba(44, 62, 80, 0.3));
+    border: 2px solid transparent;
+    border-radius: 15px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.account-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(236, 239, 241, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.account-card:hover::before {
+    left: 100%;
+}
+
+.account-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--coral-red);
+    box-shadow: 0 20px 40px rgba(231, 76, 60, 0.3);
+    background: linear-gradient(145deg, rgba(231, 76, 60, 0.1), rgba(44, 62, 80, 0.5));
+}
+
+.account-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    color: var(--coral-red);
+    transition: color 0.3s ease;
+}
+
+.account-card:hover .account-icon {
+    color: var(--bright-red);
+}
+
+.account-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--light-gray);
+}
+
+.account-description {
+    font-size: 0.95rem;
+    color: var(--medium-gray);
+    line-height: 1.4;
+}
+
+/* Netflix-style Movie Selector Styles */
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-link {
+    color: var(--medium-gray);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-link:hover {
+    color: var(--text-white);
+}
+
+.portfolio-section {
+    margin-bottom: 50px;
+    width: 100%;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-white);
+    margin-bottom: 20px;
+    padding-left: 50px;
+}
+
+.movies-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding: 0 70px;
+}
+
+.movies-row {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-behavior: smooth;
+    padding: 15px 0 25px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.movies-row::-webkit-scrollbar {
+    display: none;
+}
+
+.movie-card {
+    flex: 0 0 350px;
+    width: 350px;
+    height: 220px;
+    min-width: 350px;
+    max-width: 350px;
+    background: linear-gradient(145deg, rgba(149, 165, 166, 0.15), rgba(44, 62, 80, 0.4));
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 25px;
+    border: 2px solid transparent;
+}
+
+.movie-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, var(--coral-red), var(--bright-red));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.movie-card:hover {
+    transform: scale(1.05) translateY(-5px);
+    border-color: var(--coral-red);
+    box-shadow: 0 15px 35px rgba(231, 76, 60, 0.4);
+    z-index: 10;
+}
+
+.movie-card:hover::before {
+    opacity: 0.1;
+}
+
+.movie-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-white);
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+    line-height: 1.3;
+}
+
+.movie-description {
+    font-size: 0.85rem;
+    color: var(--medium-gray);
+    line-height: 1.4;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.movie-rating {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(231, 76, 60, 0.8);
+    color: var(--text-white);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 2;
+}
+
+/* Scroll buttons */
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(44, 62, 80, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-white);
+    font-size: 1.8rem;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    z-index: 10;
+    opacity: 0.7;
+    pointer-events: all;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.movies-container:hover .scroll-btn {
+    opacity: 1;
+}
+
+.scroll-btn:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(44, 62, 80, 1);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.scroll-btn.left {
+    left: 10px;
+}
+
+.scroll-btn.right {
+    right: 10px;
+}
+
+.scroll-btn:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.scroll-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Content section */
+.content-section {
+    padding: 30px 0;
+    width: 100%;
+}
+
+/* MODAL SYSTEM CSS */
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Modal content container */
+.modal-content {
+    background: linear-gradient(145deg, var(--dark-navy), rgba(44, 62, 80, 0.95));
+    border: 2px solid rgba(231, 76, 60, 0.3);
+    border-radius: 20px;
+    max-width: 90vw;
+    max-height: 85vh;
+    width: 800px;
+    padding: 40px;
+    position: relative;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(0.3);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+/* Modal close button */
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(231, 76, 60, 0.2);
+    border: 2px solid var(--coral-red);
+    color: var(--text-white);
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: var(--coral-red);
+    transform: scale(1.1);
+}
+
+/* Modal header */
+.modal-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.modal-rating {
+    display: inline-block;
+    background: var(--coral-red);
+    color: var(--text-white);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.modal-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-white);
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+/* Modal body */
+.modal-body {
+    color: var(--medium-gray);
+    line-height: 1.6;
+}
+
+.modal-description {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    color: var(--light-gray);
+}
+
+/* Modal sections */
+.modal-section {
+    margin-bottom: 30px;
+}
+
+.modal-section h3 {
+    font-size: 1.4rem;
+    color: var(--text-white);
+    margin-bottom: 15px;
+    border-bottom: 2px solid rgba(231, 76, 60, 0.3);
+    padding-bottom: 8px;
+}
+
+.modal-section p, .modal-section ul {
+    font-size: 1rem;
+    color: var(--medium-gray);
+    margin-bottom: 15px;
+}
+
+.modal-section ul {
+    padding-left: 20px;
+}
+
+.modal-section li {
+    margin-bottom: 8px;
+}
+
+/* Links and buttons in modal */
+.modal-button {
+    background: var(--coral-red);
+    color: var(--text-white);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px 5px;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.modal-button:hover {
+    background: var(--bright-red);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* Animation for page load */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.welcome-section {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.account-card {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.account-card:nth-child(1) { animation-delay: 0.1s; }
+.account-card:nth-child(2) { animation-delay: 0.2s; }
+.account-card:nth-child(3) { animation-delay: 0.3s; }
+.account-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        padding: 15px 25px;
+    }
+    
+    .logo {
+        font-size: 2rem;
+    }
+    
+    .main-container {
+        padding: 30px 25px;
+    }
+    
+    .welcome-title {
+        font-size: 2rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1rem;
+    }
+    
+    .account-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+    }
+    
+    .account-card {
+        padding: 30px 15px;
+    }
+    
+    .account-icon {
+        font-size: 3rem;
+    }
+    
+    .account-name {
+        font-size: 1.3rem;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        padding-left: 20px;
+    }
+    
+    .movies-container {
+        padding: 0 60px;
+    }
+    
+    .movie-card {
+        flex: 0 0 250px;
+        width: 250px;
+        min-width: 250px;
+        max-width: 250px;
+        height: 160px;
+        padding: 18px;
+    }
+    
+    .movie-title {
+        font-size: 1rem;
+    }
+    
+    .movie-description {
+        font-size: 0.8rem;
+        -webkit-line-clamp: 3;
+    }
+    
+    .scroll-btn {
+        font-size: 1.4rem;
+        width: 44px;
+        height: 44px;
+        padding: 10px 12px;
+    }
+    
+    .scroll-btn.left {
+        left: 5px;
+    }
+
+    .scroll-btn.right {
+        right: 5px;
+    }
+    
+    .modal-content {
+        max-width: 95vw;
+        max-height: 90vh;
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .modal-title {
+        font-size: 2rem;
+    }
+    
+    .modal-description {
+        font-size: 1rem;
+    }
+    
+    .modal-section h3 {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .welcome-title {
+        font-size: 1.8rem;
+    }
+    
+    .movie-card {
+        flex: 0 0 220px;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        height: 140px;
+        padding: 15px;
+    }
+
+    .movies-container {
+        padding: 0 50px;
+    }
+
+    .scroll-btn {
+        font-size: 1.2rem;
+        width: 40px;
+        height: 40px;
+        padding: 8px 10px;
+    }
+
+    .scroll-btn.left {
+        left: 2px;
+    }
+
+    .scroll-btn.right {
+        right: 2px;
+    }
+    
+    .modal-content {
+        padding: 25px 15px;
+    }
+    
+    .modal-title {
+        font-size: 1.7rem;
+    }
+    
+    .modal-description {
+        font-size: 0.95rem;
+    }
+}
+
+a, a:link, a:hover, a:visited, a:active {
+    text-decoration: none !important;
+}
